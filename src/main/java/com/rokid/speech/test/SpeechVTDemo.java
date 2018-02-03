@@ -20,7 +20,7 @@ public class SpeechVTDemo {
     String version = "1.0";
     String secret = "";
     String deviceId = "";
-    String url = "wss://apigwws-dev.open.rokid.com/api";
+    String url = "wss://apigwws.open.rokid.com/api";
 
     /**
      * 直接发送文本（对比直接发送语音数据，服务端少了一个asr识别语音为文字过程）
