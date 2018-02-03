@@ -37,9 +37,7 @@ public class SpeechVt extends WebSocketClient {
     SpeechV1.SpeechRequest speechRequestEnd;
     SpeechV1.SpeechRequest speechRequestText;
 
-    private CountDownLatch connectCountDownLatch = new CountDownLatch(1);
-    private CountDownLatch authCountDownLantch = new CountDownLatch(1);
-    private CountDownLatch sendCountDownLatch = null;
+    private CountDownLatch countDownLatch = new CountDownLatch(1);
 
     //每次发送都是以这个值来表示建立的连接标识
     private int sendId = 0;
@@ -80,7 +78,7 @@ public class SpeechVt extends WebSocketClient {
         this.connect();
         try {
             // 建立连接超时时间自己定义
-            boolean connectFlag = connectCountDownLatch.await(10, TimeUnit.SECONDS);
+            boolean connectFlag = countDownLatch.await(10, TimeUnit.SECONDS);
             if (!connectFlag) {
                 log.error("Speech websocket建立连接失败");
                 // 根据自己需求做逻辑处理
@@ -92,7 +90,8 @@ public class SpeechVt extends WebSocketClient {
         this.send(authRequest.toByteArray());
         try {
             // 登录超时时间自己定义
-            boolean authFlag = authCountDownLantch.await(10, TimeUnit.SECONDS);
+            countDownLatch = new CountDownLatch(1);
+            boolean authFlag = countDownLatch.await(10, TimeUnit.SECONDS);
             if (!authFlag) {
                 log.error("Speech auth failed");
                 // 根据自己需求做逻辑处理
@@ -157,8 +156,8 @@ public class SpeechVt extends WebSocketClient {
         speechRequestEnd = SpeechV1.SpeechRequest.newBuilder().setId(sendId).setCodec(codec).setLang(language).setType(SpeechTypes.ReqType.END).build();
         this.send(speechRequestEnd.toByteArray());
         try {
-            sendCountDownLatch = new CountDownLatch(1);
-            sendCountDownLatch.await(200, TimeUnit.SECONDS);
+            countDownLatch = new CountDownLatch(1);
+            countDownLatch.await(200, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -176,8 +175,8 @@ public class SpeechVt extends WebSocketClient {
         speechRequestText = SpeechV1.SpeechRequest.newBuilder().setId(new Random().nextInt()).setLang("zh").setAsr(tts).setType(SpeechTypes.ReqType.TEXT).build();
         this.send(speechRequestText.toByteArray());
         try {
-            sendCountDownLatch = new CountDownLatch(1);
-            sendCountDownLatch.await(10, TimeUnit.SECONDS);
+            countDownLatch = new CountDownLatch(1);
+            countDownLatch.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -185,7 +184,7 @@ public class SpeechVt extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        connectCountDownLatch.countDown();
+        countDownLatch.countDown();
         log.info("Connected");
     }
 
@@ -202,7 +201,7 @@ public class SpeechVt extends WebSocketClient {
 
         //第一次接收到的消息其实都是登录，这边只是巧合可以通过长度可以判断是不是登录。也可以用第一次建立连接后第一次接收消息做为判断auth
         if (byteMessage.length == 2) {
-            authCountDownLantch.countDown();
+            countDownLatch.countDown();
             try {
                 authResponse = Auth.AuthResponse.parseFrom(byteMessage);
             } catch (InvalidProtocolBufferException e) {
@@ -225,7 +224,7 @@ public class SpeechVt extends WebSocketClient {
                 log.info("getResult: {}", spResponse.getResult());
                 log.info("getFinish: {}", spResponse.getFinish());
                 if (spResponse.getFinish()) {
-                    sendCountDownLatch.countDown();
+                    countDownLatch.countDown();
                 }
             } catch (InvalidProtocolBufferException e) {
                 e.printStackTrace();
