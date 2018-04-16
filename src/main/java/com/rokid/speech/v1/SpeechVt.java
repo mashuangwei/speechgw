@@ -11,6 +11,7 @@ import org.java_websocket.handshake.ServerHandshake;
 import rokid.open.speech.Auth;
 import rokid.open.speech.v1.SpeechTypes;
 import rokid.open.speech.v1.SpeechV1;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.File;
@@ -25,7 +26,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 作者: mashuangwei
+ * @author: mashuangwei
  * 日期: 2017/9/18
  * 功能： speech demo
  */
@@ -135,7 +136,6 @@ public class SpeechVt extends WebSocketClient {
             byte[] buffer = new byte[9600];
             fileInput = new FileInputStream(file);
             int byteread = 0;
-            // byteread表示一次读取到buffers中的数量。
             while ((byteread = fileInput.read(buffer)) != -1) {
                 speechRequestVoi = SpeechV1.SpeechRequest.newBuilder().setId(sendId).setCodec(codec).setLang(language).setType(SpeechTypes.ReqType.VOICE).setVoice(ByteString.copyFrom(buffer)).build();
                 this.send(speechRequestVoi.toByteArray());
